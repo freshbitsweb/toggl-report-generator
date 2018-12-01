@@ -58,7 +58,7 @@ class TimeEntriesImport implements ToCollection, WithHeadingRow
             ]);
         }
 
-        return Excel::download(new TimeEntriesExport($timeEntries), 'download.csv');
+        return Excel::store(new TimeEntriesExport($timeEntries), 'download.csv');
     }
 
     /**
