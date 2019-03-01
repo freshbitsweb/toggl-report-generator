@@ -41,8 +41,8 @@ class TimeEntriesImport implements ToCollection, WithHeadingRow
             }
 
             array_push($timeEntries, [
-                'user' => 'Hiren',
-                'email' => 'hiren@freshbits.in',
+                'user' => config('app.user.name'),
+                'email' => config('app.user.email'),
                 'client' => '',
                 'project' => $project,
                 'task' => '',
