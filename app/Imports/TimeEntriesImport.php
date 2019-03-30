@@ -15,7 +15,7 @@ class TimeEntriesImport implements ToCollection, WithHeadingRow
     public function collection(Collection $rows)
     {
         $timeEntries = [];
-        $currentDate = $project = $description = '';
+        $currentDate = $project = $description = $temporaryDiscription = $temporaryProjectName = '';
 
         foreach ($rows as $row) {
             $startTime = $this->timeToFullHour(Date::excelToDateTimeObject($row['start_time']));
@@ -27,9 +27,21 @@ class TimeEntriesImport implements ToCollection, WithHeadingRow
                 $currentDate = Date::excelToDateTimeObject($row['date'])->format('Y-m-d');
             }
 
+            if ($temporaryProjectName) {
+                $project = $temporaryProjectName;
+                $temporaryProjectName = '';
+            }
+
+            if ($temporaryDiscription) {
+                $description = $temporaryDiscription;
+                $temporaryDiscription = '';
+            }
+
             if ($row['project']) {
-                if ($row['project'] == 'Breaks') {
-                    continue;
+                if ($row['project'] == 'Break') {
+                    $temporaryDiscription = $description;
+                    $temporaryProjectName = $project;
+                    $description = '';
                 }
 
                 $project = $row['project'];
