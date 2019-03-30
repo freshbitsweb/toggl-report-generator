@@ -40,4 +40,9 @@ return [
         ],
     ],
 
+    'toggl' => [
+        'key' => env('TOGGL_API_KEY'),
+        'workspace' => env('TOGGL_WORKSPACE_NAME'),
+    ],
+
 ];

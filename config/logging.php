@@ -52,6 +52,20 @@ return [
             'days' => 14,
         ],
 
+        'toggl_success' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/toggl_success/toggl.log'),
+            'level' => 'debug',
+            'days' => 14,
+        ],
+
+        'toggl_error' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/toggl_error/toggl.log'),
+            'level' => 'debug',
+            'days' => 14,
+        ],
+
         'slack' => [
             'driver' => 'slack',
             'url' => env('LOG_SLACK_WEBHOOK_URL'),

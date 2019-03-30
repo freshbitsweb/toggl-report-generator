@@ -3,9 +3,9 @@
 namespace App\Imports;
 
 use Carbon\Carbon;
-use App\Exports\TimeEntriesExport;
+use App\Services\Toggl;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -21,8 +21,7 @@ class TimeEntriesImport implements ToCollection, WithHeadingRow
             $startTime = $this->timeToFullHour(Date::excelToDateTimeObject($row['start_time']));
             $endTime = $this->timeToFullHour(Date::excelToDateTimeObject($row['end_time']));
 
-            $duration = new Carbon($endTime);
-            $duration = $duration->diff(new Carbon($startTime))->format('%H:%I:%S');
+            $duration = (new Carbon($endTime))->diffInSeconds(new Carbon($startTime));
 
             if ($row['date']) {
                 $currentDate = Date::excelToDateTimeObject($row['date'])->format('Y-m-d');
@@ -41,24 +40,40 @@ class TimeEntriesImport implements ToCollection, WithHeadingRow
             }
 
             array_push($timeEntries, [
-                'user' => config('app.user.name'),
-                'email' => config('app.user.email'),
-                'client' => '',
                 'project' => $project,
-                'task' => '',
                 'description' => $description,
-                'billable' => 'No',
-                'start_date' => $currentDate,
-                'start_time' => $startTime,
-                'end_date' => $currentDate,
-                'end_time' => $endTime,
+                'start' => Carbon::createFromFormat('Y-m-d H:i:s', $currentDate.' '.$startTime)->format('c'),
+                'end' => Carbon::createFromFormat('Y-m-d H:i:s', $currentDate.' '.$endTime)->format('c'),
                 'duration' => $duration,
-                'tag' => '',
-                'amount' => '',
             ]);
         }
 
-        return Excel::store(new TimeEntriesExport($timeEntries), 'download.csv');
+        $toggl = resolve(Toggl::class);
+        $workspaceId = $toggl->getUserWorkspaceId();
+        $this->projects = $toggl->getProjectsOf($workspaceId);
+
+        foreach ($timeEntries as $timeEntry) {
+            $timeEntryDetails = [
+                'description' => $timeEntry['description'],
+                'wid' => $workspaceId,
+                'pid' => $this->getProjectId($timeEntry['project']),
+                'start' => $timeEntry['start'],
+                'stop' => $timeEntry['end'],
+                'duration' => $timeEntry['duration'],
+                'created_with' => 'Laravel Toggl Report Generator',
+            ];
+
+            $timeEntryResponse = $toggl->addNewTimeEntry($timeEntryDetails);
+
+            if (property_exists($timeEntryResponse, 'success')) {
+                Log::channel('toggl_error')->info(collect([$timeEntryResponse, $timeEntryDetails])->toJson());
+                continue;
+            }
+
+            Log::channel('toggl_success')->info(collect([$timeEntryResponse, $timeEntryDetails])->toJson());
+        }
+
+        return;
     }
 
     /**
@@ -73,5 +88,18 @@ class TimeEntriesImport implements ToCollection, WithHeadingRow
         $hour = substr($date, 0, 5);
 
         return date("H:i:s", strtotime($hour >= 9 && $hour < 12 ? $date .= ' AM' : $date .= ' PM'));
+    }
+
+    /**
+     * Returns the toggl project id from project name
+     *
+     * @param string $projectName
+     * @return int
+     **/
+    public function getProjectId($projectName)
+    {
+        $projects = collect($this->projects);
+
+        return $projects->firstWhere('name', $projectName)->id;
     }
 }

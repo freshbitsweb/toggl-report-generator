@@ -15,8 +15,16 @@ class HomeController extends Controller
      **/
     public function index()
     {
-        Excel::import(new TimeEntriesImport, 'public/file.ods');
+        $baseFilePath = base_path() . '/../../desktop_files/file.ods';
 
-        return response()->download(storage_path('app/download.csv'));
+        $fileName = now()->toDateString();
+
+        Storage::disk('backup')->put($fileName.'.ods', file_get_contents($baseFilePath));
+
+        Excel::import(new TimeEntriesImport, 'backup/'.$fileName.'.ods');
+
+        unlink($baseFilePath);
+
+        copy(storage_path('app/file_format/file.ods'), $baseFilePath);
     }
 }

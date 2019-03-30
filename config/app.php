@@ -226,9 +226,4 @@ return [
 
     ],
 
-    'user' => [
-        'name' => env('USER_NAME'),
-        'email' => env('USER_EMAIL')
-    ],
-
 ];
