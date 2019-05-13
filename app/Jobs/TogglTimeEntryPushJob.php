@@ -24,7 +24,7 @@ class TogglTimeEntryPushJob implements ShouldQueue
     {
         $baseFilePath = base_path() . '/../../desktop_files/file.ods';
 
-        $fileName = now()->toDateString();
+        $fileName = now()->toDateTimeString();
 
         Storage::disk('backup')->put($fileName.'.ods', file_get_contents($baseFilePath));
 
