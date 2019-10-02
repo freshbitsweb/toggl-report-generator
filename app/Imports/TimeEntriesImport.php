@@ -15,11 +15,19 @@ class TimeEntriesImport implements ToCollection, WithHeadingRow
     public function collection(Collection $rows)
     {
         $timeEntries = [];
-        $currentDate = $project = $description = $temporaryDiscription = $temporaryProjectName = '';
+        $currentDate = $project = $description = $temporaryDescription = $temporaryProjectName = '';
 
         foreach ($rows as $row) {
-            $startTime = $this->timeToFullHour(Date::excelToDateTimeObject($row['start_time']));
-            $endTime = $this->timeToFullHour(Date::excelToDateTimeObject($row['end_time']));
+
+            $startTime = $this->timeToFullHour(
+                    Date::excelToDateTimeObject($row['start_time'])
+                        ->setTimezone(new \DateTimeZone(config('app.timezone')))
+                );
+
+            $endTime = $this->timeToFullHour(
+                    Date::excelToDateTimeObject($row['end_time'])
+                        ->setTimezone(new \DateTimeZone(config('app.timezone')))
+                );
 
             $duration = (new Carbon($endTime))->diffInSeconds(new Carbon($startTime));
 
@@ -32,14 +40,14 @@ class TimeEntriesImport implements ToCollection, WithHeadingRow
                 $temporaryProjectName = '';
             }
 
-            if ($temporaryDiscription) {
-                $description = $temporaryDiscription;
-                $temporaryDiscription = '';
+            if ($temporaryDescription) {
+                $description = $temporaryDescription;
+                $temporaryDescription = '';
             }
 
             if ($row['project']) {
                 if ($row['project'] == 'Break') {
-                    $temporaryDiscription = $description;
+                    $temporaryDescription = $description;
                     $temporaryProjectName = $project;
                     $description = '';
                 }
@@ -96,10 +104,10 @@ class TimeEntriesImport implements ToCollection, WithHeadingRow
      **/
     public function timeToFullHour($date)
     {
-        $date = $date->format('h:i:s');
+        $date = $date->format('H:i:s');
         $hour = substr($date, 0, 5);
 
-        return date("H:i:s", strtotime($hour >= 9 && $hour < 12 ? $date .= ' AM' : $date .= ' PM'));
+        return date("H:i:s", strtotime($hour >= 8 && $hour < 12 ? $date .= ' AM' : $date .= ' PM'));
     }
 
     /**
