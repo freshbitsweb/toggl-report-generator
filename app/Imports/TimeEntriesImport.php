@@ -18,16 +18,15 @@ class TimeEntriesImport implements ToCollection, WithHeadingRow
         $currentDate = $project = $description = $temporaryDescription = $temporaryProjectName = '';
 
         foreach ($rows as $row) {
-
             $startTime = $this->timeToFullHour(
-                    Date::excelToDateTimeObject($row['start_time'])
+                Date::excelToDateTimeObject($row['start_time'])
                         ->setTimezone(new \DateTimeZone(config('app.timezone')))
-                );
+            );
 
             $endTime = $this->timeToFullHour(
-                    Date::excelToDateTimeObject($row['end_time'])
+                Date::excelToDateTimeObject($row['end_time'])
                         ->setTimezone(new \DateTimeZone(config('app.timezone')))
-                );
+            );
 
             $duration = (new Carbon($endTime))->diffInSeconds(new Carbon($startTime));
 

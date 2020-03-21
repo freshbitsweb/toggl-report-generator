@@ -11,4 +11,5 @@
 |
 */
 
-Route::get('/', 'HomeController@index');
+Route::get('/', 'HomeController@timeEntries');
+Route::post('/', 'HomeController@uploadTimeEntries');
